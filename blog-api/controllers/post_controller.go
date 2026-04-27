@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"go-blog/models"
+	"go-blog/pkg/response"
 	"go-blog/services"
+
 	"net/http"
 	"strconv"
 
@@ -20,88 +22,79 @@ func NewPostController(service services.PostService) *PostController {
 // PostController methods
 func (ctrl *PostController) CreatePost(c echo.Context) error {
 	post := new(models.Post)
+
 	if err := c.Bind(post); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Invalid input",
-		})
+		return response.Error(c, http.StatusBadRequest, "Invalid input", err.Error())
 	}
 
 	createdPost, err := ctrl.service.CreatePost(post)
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"error": "Failed to create post",
-		})
+		return response.Error(c, http.StatusInternalServerError, "Failed to create post", err.Error())
 	}
-	return c.JSON(http.StatusOK, createdPost)
+
+	return response.Success(c, "Post created successfully", createdPost, 201)
 }
 
 func (ctrl *PostController) GetPostByID(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
+
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Invalid post ID",
-		})
+		return response.Error(c, http.StatusBadRequest, "Invalid post ID", err.Error())
 	}
 
 	post, err := ctrl.service.GetPostByID(uint(id))
+
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]string{
-			"error": "Post not found",
-		})
+		return response.Error(c, http.StatusNotFound, "Post not found", err.Error())
 	}
-	return c.JSON(http.StatusOK, post)
+
+	return response.Success(c, "Post retrieved successfully", post, 200)
 }
 
 func (ctrl *PostController) GetAllPosts(c echo.Context) error {
 	posts, err := ctrl.service.GetAllPosts()
+
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"error": "Failed to fetch posts",
-		})
+		return response.Error(c, http.StatusInternalServerError, "Failed to fetch posts", err.Error())
 	}
-	return c.JSON(http.StatusOK, posts)
+
+	return response.Success(c, "Posts retrieved successfully", posts, 200)
 }
 
 func (ctrl *PostController) UpdatePost(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
+
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Invalid post ID",
-		})
+		return response.Error(c, http.StatusBadRequest, "Invalid post ID", err.Error())
 	}
 
 	post := new(models.Post)
+
 	if err := c.Bind(post); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Invalid input",
-		})
+		return response.Error(c, http.StatusBadRequest, "Invalid input", err.Error())
 	}
 
 	updatedPost, err := ctrl.service.UpdatePost(uint(id), post)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]string{
-			"error": "Post not found",
-		})
+		return response.Error(c, http.StatusNotFound, "Post not found", err.Error())
 	}
-	return c.JSON(http.StatusOK, updatedPost)
+
+	return response.Success(c, "Post updated successfully", updatedPost, 200)
 }
 
 func (ctrl *PostController) DeletePost(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
+
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Invalid post ID",
-		})
+		return response.Error(c, http.StatusBadRequest, "Invalid post ID", err.Error())
 	}
 
 	err = ctrl.service.DeletePost(uint(id))
+
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]string{
-			"error": "Post not found",
-		})
+		return response.Error(c, http.StatusNotFound, "Post not found", err.Error())
 	}
-	return c.JSON(http.StatusOK, map[string]string{
-		"message": "Post deleted successfully",
-	})
+
+	return response.Success(c, "Post deleted successfully", nil, 200)
 }

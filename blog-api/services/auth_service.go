@@ -15,7 +15,7 @@ import (
 // AuthService defines authentication operations.
 type AuthService interface {
 	Register(name, email, password string) (*models.User, error)
-	Login(email, password string) (string, error)
+	Login(username, password string) (string, error)
 }
 
 type authService struct {
@@ -70,8 +70,8 @@ func (s *authService) Register(username, email, password string) (*models.User, 
 	return user, nil
 }
 
-func (s *authService) Login(email, password string) (string, error) {
-	user, err := s.repo.FindByEmail(email)
+func (s *authService) Login(username, password string) (string, error) {
+	user, err := s.repo.FindByUsername(username)
 	if err != nil {
 		return "", errors.New("invalid credentials")
 	}

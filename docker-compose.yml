@@ -11,7 +11,7 @@ services:
       - DB_HOST=mysql
       - DB_USER=root
       - DB_PASS=root
-      - DB_NAME=testdb
+      - DB_NAME=blog_db
       - REDIS_HOST=redis
       - JWT_SECRET=supersecretkey
     networks:
@@ -23,7 +23,7 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: testdb
+      MYSQL_DATABASE: blog_db
     ports:
       - "3329:3306"
     volumes:

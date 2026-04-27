@@ -48,5 +48,11 @@ func (s *postService) UpdatePost(id uint, post *models.Post) (*models.Post, erro
 }
 
 func (s *postService) DeletePost(id uint) error {
+	_, err := s.repo.GetPostByID(id)
+
+	if err != nil {
+		return err
+	}
+
 	return s.repo.DeletePost(id)
 }

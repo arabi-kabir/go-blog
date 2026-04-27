@@ -24,7 +24,7 @@ func ConnectDB() *gorm.DB {
 	var err error
 
 	// 🔁 Retry loop
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 10; i++ {
 		db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 		if err == nil {
 			fmt.Println("Successfully connected to the database")
@@ -32,7 +32,7 @@ func ConnectDB() *gorm.DB {
 			return db
 		}
 		fmt.Printf("Failed to connect to the database (attempt %d): %v\n", i+1, err)
-		time.Sleep(2 * time.Second)
+		time.Sleep(3 * time.Second)
 	}
 
 	log.Fatal("❌ Failed to connect to DB:", err)

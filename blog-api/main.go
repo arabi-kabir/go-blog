@@ -1,4 +1,4 @@
-package goblog
+package main
 
 import (
 	"go-blog/config"
