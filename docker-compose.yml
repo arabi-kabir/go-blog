@@ -1,0 +1,65 @@
+services:
+  app:
+    build: ./blog-api
+    container_name: blog_api
+    ports:
+      - "8289:8080"
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASS=root
+      - DB_NAME=testdb
+      - REDIS_HOST=redis
+      - JWT_SECRET=supersecretkey
+    networks:
+      - blog-app-network
+
+  mysql:
+    image: mysql:8.0
+    container_name: blog_mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: testdb
+    ports:
+      - "3329:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - blog-app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    container_name: blog_redis
+    ports:
+      - "6489:6379"
+    networks:
+      - blog-app-network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: blog_phpmyadmin
+    restart: always
+    ports:
+      - "8288:80"
+    environment:
+      PMA_HOST: mysql
+      MYSQL_ROOT_PASSWORD: root
+    depends_on:
+      - mysql
+    networks:
+      - blog-app-network
+
+networks:
+  blog-app-network:
+
+volumes:
+  mysql_data:
