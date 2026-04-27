@@ -19,7 +19,6 @@ func NewPostController(service services.PostService) *PostController {
 	return &PostController{service: service}
 }
 
-// PostController methods
 func (ctrl *PostController) CreatePost(c echo.Context) error {
 	post := new(models.Post)
 
