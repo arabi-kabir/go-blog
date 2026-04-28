@@ -28,7 +28,7 @@ func ConnectDB() *gorm.DB {
 		db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 		if err == nil {
 			fmt.Println("Successfully connected to the database")
-			db.AutoMigrate(&models.User{}, &models.Post{})
+			db.AutoMigrate(&models.User{}, &models.PostCategory{}, &models.Post{})
 			return db
 		}
 		fmt.Printf("Failed to connect to the database (attempt %d): %v\n", i+1, err)

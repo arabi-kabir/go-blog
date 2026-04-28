@@ -8,7 +8,7 @@ import (
 type PostService interface {
 	CreatePost(post *models.Post) (*models.Post, error)
 	GetPostByID(id uint) (*models.Post, error)
-	GetAllPosts() ([]models.Post, error)
+	GetAllPosts(page, limit int) ([]models.Post, int64, error)
 	UpdatePost(id uint, post *models.Post) (*models.Post, error)
 	DeletePost(id uint) error
 }
@@ -21,7 +21,6 @@ func NewPostService(repo repositories.PostRepository) PostService {
 	return &postService{repo: repo}
 }
 
-// PostService methods here...
 func (s *postService) CreatePost(post *models.Post) (*models.Post, error) {
 	return s.repo.CreatePost(post)
 }
@@ -30,8 +29,9 @@ func (s *postService) GetPostByID(id uint) (*models.Post, error) {
 	return s.repo.GetPostByID(id)
 }
 
-func (s *postService) GetAllPosts() ([]models.Post, error) {
-	return s.repo.GetAllPosts()
+func (s *postService) GetAllPosts(page, limit int) ([]models.Post, int64, error) {
+	offset := (page - 1) * limit
+	return s.repo.GetAllPosts(limit, offset)
 }
 
 func (s *postService) UpdatePost(id uint, post *models.Post) (*models.Post, error) {

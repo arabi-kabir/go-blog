@@ -52,13 +52,39 @@ func (ctrl *PostController) GetPostByID(c echo.Context) error {
 }
 
 func (ctrl *PostController) GetAllPosts(c echo.Context) error {
-	posts, err := ctrl.service.GetAllPosts()
+	page := 1
+	limit := 10
+
+	// Read query params
+	if p := c.QueryParam("page"); p != "" {
+		if parsedPage, err := strconv.Atoi(p); err == nil && parsedPage > 0 {
+			page = parsedPage
+		}
+	}
+
+	if l := c.QueryParam("limit"); l != "" {
+		if parsedLimit, err := strconv.Atoi(l); err == nil && parsedLimit > 0 {
+			limit = parsedLimit
+		}
+	}
+
+	if limit > 100 {
+		limit = 100
+	}
+
+	posts, total, err := ctrl.service.GetAllPosts(page, limit)
 
 	if err != nil {
 		return response.Error(c, http.StatusInternalServerError, "Failed to fetch posts", err.Error())
 	}
 
-	return response.Success(c, "Posts retrieved successfully", posts, 200)
+	return response.Success(c, "Posts retrieved successfully", map[string]interface{}{
+		"data":       posts,
+		"page":       page,
+		"limit":      limit,
+		"total":      total,
+		"totalPages": (total + int64(limit) - 1) / int64(limit),
+	}, 200)
 }
 
 func (ctrl *PostController) UpdatePost(c echo.Context) error {
