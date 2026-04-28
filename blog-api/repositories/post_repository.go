@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"context"
 	"go-blog/models"
 
 	"gorm.io/gorm"
@@ -23,73 +24,88 @@ func NewPostRepository(db *gorm.DB) PostRepository {
 }
 
 func (r *postRepository) CreatePost(post *models.Post) (*models.Post, error) {
-	result := r.db.Create(post)
+	ctx := context.Background()
+	postDB := gorm.G[models.Post](r.db)
 
-	if result.Error != nil {
-		return nil, result.Error
+	err := postDB.Create(ctx, post)
+
+	if err != nil {
+		return nil, err
 	}
 
 	return post, nil
 }
 
 func (r *postRepository) GetPostByID(id uint) (*models.Post, error) {
-	var post models.Post
+	ctx := context.Background()
+	postDB := gorm.G[models.Post](r.db)
 
-	result := r.db.
-		Preload("Author", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id", "username", "email")
+	post, err := postDB.
+		Preload("Author", func(db gorm.PreloadBuilder) error {
+			db.Select("id", "username", "email")
+			return nil
 		}).
-		Preload("Category").
-		First(&post, id)
+		Preload("Category", nil).
+		Where("id = ?", id).
+		First(ctx)
 
-	if result.Error != nil {
-		return nil, result.Error
+	if err != nil {
+		return nil, err
 	}
 
 	return &post, nil
 }
 
 func (r *postRepository) GetAllPosts(limit, offset int) ([]models.Post, int64, error) {
-	var posts []models.Post
-	var total int64
+	ctx := context.Background()
+	postDB := gorm.G[models.Post](r.db)
 
+	var total int64
 	totalResult := r.db.Model(&models.Post{}).Count(&total)
 	if totalResult.Error != nil {
 		return nil, 0, totalResult.Error
 	}
 
-	// Get paginated data with relations
-	result := r.db.
-		Preload("Author", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id", "username", "email")
-		}).
-		Preload("Category").
+	posts, err := postDB.
+		Preload("Category", nil).
+		Preload("Author", nil).
 		Order("created_at DESC").
 		Limit(limit).
 		Offset(offset).
-		Find(&posts)
+		Find(ctx)
 
-	if result.Error != nil {
-		return nil, 0, result.Error
+	if err != nil {
+		return nil, 0, err
 	}
 
 	return posts, total, nil
 }
 
 func (r *postRepository) UpdatePost(post *models.Post) (*models.Post, error) {
-	result := r.db.Save(post)
+	ctx := context.Background()
+	postDB := gorm.G[models.Post](r.db)
 
-	if result.Error != nil {
-		return nil, result.Error
+	_, err := postDB.Where("id = ?", post.ID).Updates(ctx, models.Post{
+		Title:       post.Title,
+		Content:     post.Content,
+		IsPublished: post.IsPublished,
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
 	return post, nil
 }
 
 func (r *postRepository) DeletePost(id uint) error {
-	result := r.db.Delete(&models.Post{}, id)
-	if result.Error != nil {
-		return result.Error
+	ctx := context.Background()
+	postDB := gorm.G[models.Post](r.db)
+
+	_, err := postDB.Where("id = ?", id).Delete(ctx)
+
+	if err != nil {
+		return err
 	}
 
 	return nil

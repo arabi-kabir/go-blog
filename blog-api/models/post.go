@@ -3,11 +3,12 @@ package models
 import "time"
 
 type Post struct {
-	ID        uint      `gorm:"primaryKey" json:"id"`
-	Title     string    `gorm:"not null" json:"title"`
-	Content   string    `gorm:"type:text;not null" json:"content"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID          uint      `gorm:"primaryKey" json:"id"`
+	Title       string    `gorm:"not null" json:"title"`
+	Content     string    `gorm:"type:text;not null" json:"content"`
+	IsPublished bool      `gorm:"not null" json:"is_published"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 
 	// Foreign key
 	AuthorID       uint `gorm:"not null" json:"author_id"`
