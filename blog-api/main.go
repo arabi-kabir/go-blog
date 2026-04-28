@@ -28,7 +28,7 @@ func main() {
 	postRepo := repositories.NewPostRepository(db)
 
 	authService := services.NewAuthService(userRepo)
-	postService := services.NewPostService(postRepo)
+	postService := services.NewPostService(postRepo, userRepo)
 
 	authController := controllers.NewAuthController(authService)
 	postController := controllers.NewPostController(postService)

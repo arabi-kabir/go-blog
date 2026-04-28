@@ -16,6 +16,7 @@ type UserRepository interface {
 	Create(user *models.User) error
 	Save(user *models.User) error
 	Delete(id uint) (bool, error)
+	ExistsById(id uint) (bool, error)
 }
 
 type userRepository struct {
@@ -73,4 +74,17 @@ func (r *userRepository) Delete(id uint) (bool, error) {
 		return false, result.Error
 	}
 	return result.RowsAffected > 0, nil
+}
+
+func (r *userRepository) ExistsById(id uint) (bool, error) {
+	var exists bool
+	err := r.db.Model(&models.User{}).
+		Select("count(*) > 0").
+		Where("id = ?", id).
+		Scan(&exists).Error
+
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }

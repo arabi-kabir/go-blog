@@ -1,6 +1,8 @@
 package services
 
 import (
+	"errors"
+	"fmt"
 	"go-blog/models"
 	"go-blog/repositories"
 )
@@ -14,28 +16,49 @@ type PostService interface {
 }
 
 type postService struct {
-	repo repositories.PostRepository
+	postRepo repositories.PostRepository
+	userRepo repositories.UserRepository
 }
 
-func NewPostService(repo repositories.PostRepository) PostService {
-	return &postService{repo: repo}
+//func NewPostService(repo repositories.PostRepository) PostService {
+//	return &postService{postRepo: repo}
+//}
+
+func NewPostService(postRepo repositories.PostRepository, userRepo repositories.UserRepository) PostService {
+	return &postService{
+		postRepo: postRepo,
+		userRepo: userRepo, // Assign the dependency here
+	}
 }
 
 func (s *postService) CreatePost(post *models.Post) (*models.Post, error) {
-	return s.repo.CreatePost(post)
+	userExists, err := s.userRepo.ExistsById(post.AuthorID)
+
+	fmt.Println(userExists)
+	fmt.Println(err)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !userExists {
+		return nil, errors.New("author not found")
+	}
+
+	return s.postRepo.CreatePost(post)
 }
 
 func (s *postService) GetPostByID(id uint) (*models.Post, error) {
-	return s.repo.GetPostByID(id)
+	return s.postRepo.GetPostByID(id)
 }
 
 func (s *postService) GetAllPosts(page, limit int) ([]models.Post, int64, error) {
 	offset := (page - 1) * limit
-	return s.repo.GetAllPosts(limit, offset)
+	return s.postRepo.GetAllPosts(limit, offset)
 }
 
 func (s *postService) UpdatePost(id uint, post *models.Post) (*models.Post, error) {
-	existingPost, err := s.repo.GetPostByID(id)
+	existingPost, err := s.postRepo.GetPostByID(id)
 
 	if err != nil {
 		return nil, err
@@ -44,15 +67,15 @@ func (s *postService) UpdatePost(id uint, post *models.Post) (*models.Post, erro
 	existingPost.Title = post.Title
 	existingPost.Content = post.Content
 
-	return s.repo.UpdatePost(existingPost)
+	return s.postRepo.UpdatePost(existingPost)
 }
 
 func (s *postService) DeletePost(id uint) error {
-	_, err := s.repo.GetPostByID(id)
+	_, err := s.postRepo.GetPostByID(id)
 
 	if err != nil {
 		return err
 	}
 
-	return s.repo.DeletePost(id)
+	return s.postRepo.DeletePost(id)
 }
