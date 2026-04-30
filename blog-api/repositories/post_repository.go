@@ -33,7 +33,19 @@ func (r *postRepository) CreatePost(post *models.Post) (*models.Post, error) {
 		return nil, err
 	}
 
-	return post, nil
+	var result models.Post
+
+	result, err = postDB.
+		Preload("Author", nil).
+		Preload("Category", nil).
+		Where("id = ?", post.ID).
+		First(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
 }
 
 func (r *postRepository) GetPostByID(id uint) (*models.Post, error) {
@@ -86,16 +98,28 @@ func (r *postRepository) UpdatePost(post *models.Post) (*models.Post, error) {
 	postDB := gorm.G[models.Post](r.db)
 
 	_, err := postDB.Where("id = ?", post.ID).Updates(ctx, models.Post{
-		Title:       post.Title,
-		Content:     post.Content,
-		IsPublished: post.IsPublished,
+		Title:          post.Title,
+		Content:        post.Content,
+		IsPublished:    post.IsPublished,
+		PostCategoryID: post.PostCategoryID,
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	return post, nil
+	// fetch updated post with relations
+	res, err := gorm.G[models.Post](r.db).
+		Preload("Author", nil).
+		Preload("Category", nil).
+		Where("id = ?", post.ID).
+		First(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &res, nil
 }
 
 func (r *postRepository) DeletePost(id uint) error {

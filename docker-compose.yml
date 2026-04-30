@@ -43,6 +43,34 @@ services:
       - "6489:6379"
     networks:
       - blog-app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: blog_redis_insight
+    restart: always
+    ports:
+      - "8298:8001"
+    networks:
+      - blog-app-network
+    depends_on:
+      - redis
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: blog_redis_commander
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8299:8081"
+    networks:
+      - blog-app-network
+    depends_on:
+      - redis
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"go-blog/dto"
 	"go-blog/models"
 	"go-blog/pkg/response"
 	"go-blog/services"
@@ -20,19 +21,36 @@ func NewPostController(service services.PostService) *PostController {
 }
 
 func (ctrl *PostController) CreatePost(c echo.Context) error {
-	post := new(models.Post)
+	req := new(dto.CreatePostRequest)
 
-	if err := c.Bind(post); err != nil {
+	if err := c.Bind(req); err != nil {
 		return response.Error(c, http.StatusBadRequest, "Invalid input", err.Error())
 	}
 
-	createdPost, err := ctrl.service.CreatePost(post)
+	post := models.Post{
+		Title:          req.Title,
+		Content:        req.Content,
+		IsPublished:    req.IsPublished,
+		AuthorID:       req.AuthorID,
+		PostCategoryID: req.PostCategoryID,
+	}
+
+	createdPost, err := ctrl.service.CreatePost(&post)
 
 	if err != nil {
 		return response.Error(c, http.StatusInternalServerError, "Failed to create post", err.Error())
 	}
 
-	return response.Success(c, "Post created successfully", createdPost, 201)
+	res := dto.PostResponse{
+		ID:           createdPost.ID,
+		Title:        createdPost.Title,
+		Content:      createdPost.Content,
+		IsPublished:  createdPost.IsPublished,
+		Author:       createdPost.Author.Username,
+		PostCategory: createdPost.Category.Title,
+	}
+
+	return response.Success(c, "Post created successfully", res, 201)
 }
 
 func (ctrl *PostController) GetPostByID(c echo.Context) error {
@@ -48,7 +66,16 @@ func (ctrl *PostController) GetPostByID(c echo.Context) error {
 		return response.Error(c, http.StatusNotFound, "Post not found", err.Error())
 	}
 
-	return response.Success(c, "Post retrieved successfully", post, 200)
+	res := dto.PostResponse{
+		ID:           post.ID,
+		Title:        post.Title,
+		Content:      post.Content,
+		IsPublished:  post.IsPublished,
+		Author:       post.Author.Username,
+		PostCategory: post.Category.Title,
+	}
+
+	return response.Success(c, "Post retrieved successfully", res, 200)
 }
 
 func (ctrl *PostController) GetAllPosts(c echo.Context) error {
@@ -78,8 +105,22 @@ func (ctrl *PostController) GetAllPosts(c echo.Context) error {
 		return response.Error(c, http.StatusInternalServerError, "Failed to fetch posts", err.Error())
 	}
 
+	// Convert to DTO
+	var postResponses []dto.PostResponse
+
+	for _, p := range posts {
+		postResponses = append(postResponses, dto.PostResponse{
+			ID:           p.ID,
+			Title:        p.Title,
+			Content:      p.Content,
+			IsPublished:  p.IsPublished,
+			Author:       p.Author.Username,
+			PostCategory: p.Category.Title,
+		})
+	}
+
 	return response.Success(c, "Posts retrieved successfully", map[string]interface{}{
-		"data":       posts,
+		"data":       postResponses,
 		"page":       page,
 		"limit":      limit,
 		"total":      total,
@@ -94,18 +135,34 @@ func (ctrl *PostController) UpdatePost(c echo.Context) error {
 		return response.Error(c, http.StatusBadRequest, "Invalid post ID", err.Error())
 	}
 
-	post := new(models.Post)
+	req := new(dto.UpdatePostRequest)
 
-	if err := c.Bind(post); err != nil {
+	if err := c.Bind(req); err != nil {
 		return response.Error(c, http.StatusBadRequest, "Invalid input", err.Error())
 	}
 
-	updatedPost, err := ctrl.service.UpdatePost(uint(id), post)
+	post := models.Post{
+		Title:          req.Title,
+		Content:        req.Content,
+		IsPublished:    req.IsPublished,
+		PostCategoryID: req.PostCategoryID,
+	}
+
+	updatedPost, err := ctrl.service.UpdatePost(uint(id), &post)
 	if err != nil {
 		return response.Error(c, http.StatusNotFound, "Post not found", err.Error())
 	}
 
-	return response.Success(c, "Post updated successfully", updatedPost, 200)
+	res := dto.PostResponse{
+		ID:           updatedPost.ID,
+		Title:        updatedPost.Title,
+		Content:      updatedPost.Content,
+		IsPublished:  updatedPost.IsPublished,
+		Author:       updatedPost.Author.Username,
+		PostCategory: updatedPost.Category.Title,
+	}
+
+	return response.Success(c, "Post updated successfully", res, 200)
 }
 
 func (ctrl *PostController) DeletePost(c echo.Context) error {
